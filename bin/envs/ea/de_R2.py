@@ -13,7 +13,7 @@ from collections import Counter
 from optproblems import *
 from optproblems.cec2005 import *
 import cocoex
-
+import os
 def rand1(population, samples, scale, best, i): # DE/rand/1
     r0, r1, r2 = samples[:3]
     return (population[r0] + scale * (population[r1] - population[r2]))
@@ -165,7 +165,7 @@ def Best_Offspring2(popsize, n_ops, gen_window, Off_met, max_gen):
 mutations = [rand1, rand2, rand_to_best2, current_to_rand1]
 
 class DEEnv(gym.Env):
-    def __init__(self, FF, NP, CR, FE, max_gen, W):
+    def __init__(self, func_choice, FF, NP, CR, FE, max_gen, W):
         self.n_ops = 4
         self.action_space = spaces.Discrete(self.n_ops)
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=(99,), dtype = np.float32)
@@ -174,6 +174,7 @@ class DEEnv(gym.Env):
         #self.FF = 0.5; self.CR = 1.0
         #self.budget = 1e2
         #self.NP = 100
+        self.func_choice = func_choice
         self.FF = FF
         self.CR = CR
         self.NP = NP
@@ -191,11 +192,11 @@ class DEEnv(gym.Env):
         # BBOB
         suite_name = "bbob"
         suite_options = "dimensions: 2, 3, 5, 10, 20, 40"
-        suite = cocoex.Suite(suite_name, "", suite_options)
+        self.suite = cocoex.Suite(suite_name, "", suite_options)
         # First "" takes following arguments: year, instances; Second "" takes following arguments: dimensions, dimension_indices, function_indices, instance_indices
         # for problem in suite:
             # print(problem)
-        self.func_choice = [suite[30], suite[80], suite[150], suite[190], suite[270], suite[350], suite[420], suite[500], suite[590], suite[660], suite[715]]
+        # self.func_choice = [suite[30], suite[80], suite[150], suite[190], suite[270], suite[350], suite[420], suite[500], suite[590], suite[660], suite[715]]
         self.fun_index = 0
     
     def step(self, action):
@@ -351,7 +352,7 @@ class DEEnv(gym.Env):
         # print("Function info: fun= ", self.func_select[self.fun_index], " with dim = ", self.dim, " with best value= ", self.best_value)
         self.a = time.time()
         # BBOB
-        self.fun = self.func_choice[self.fun_index]# ; print("fun details:",self.fun_index, self.fun)
+        self.fun = self.suite[int(self.func_choice[self.fun_index])]# ; print("fun details:",self.fun_index, self.fun)
         self.dim = self.fun.dimension
         self.lbounds = self.fun.lower_bounds
         self.ubounds = self.fun.upper_bounds
