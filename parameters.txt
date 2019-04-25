@@ -1,0 +1,21 @@
+### Parameter file for the DE-DDQN software
+ 
+
+#name		switch		     type	values			[conditions (using R syntax)]
+
+FF             	"--FF "              r  	(0.1, 2.0)
+NP             	"--NP "              i	        (50, 400)
+CR             	"--CR "              r  	(0.1, 1.0) 		
+FE		"--FE "	  	     i		(100, 5000)
+max_gen		"--max_gen "	     i		(1, 100)
+W		"--W "     	     i          (10, 100)
+#n_layer	"--n_layer "         i          (1, 20)
+unit            "--unit "            i          (10, 100)      
+batchsize       "--batchsize "       i          (16, 512)
+gamma           "--gamma "           r          (0.0, 1.0)
+C               "--C "               i          (100, 100000) 
+memory          "--memory "          i          (10000, 10000000)
+warmup          "--warmup "          i          (100, 10000000)
+LR		"--LR "		     r 	        (0, 1.0)
+training_steps  "--training_steps "  i          (100000, 1000000000)  
+             
