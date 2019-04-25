@@ -25,6 +25,8 @@ from rl.memory import SequentialMemory
 from rl.util import *
 
 import argparse
+from inspect import currentframe, getframeinfo
+from pathlib import Path
 
 class ModelCheckpoint(Callback):
     def __init__(self, filepath, interval, verbose=1):
@@ -210,9 +212,12 @@ training_steps = args.training_steps
 ENV_NAME = 'ea'
 
                             ################################################# Training phase ##############################################################
-
+filename = getframeinfo(currentframe()).filename
+parent = Path(filename).resolve().parent
+#print(parent/"training_set.txt")
+print(filename, parent)
 func_choice = []
-with open(os.path.abspath('training_set.txt'), 'r') as f:
+with open(parent/"training_set.txt", 'r') as f:
     for item in f:
         func_choice.append(float(item.rstrip()))
 env_train = de_R2.DEEnv(func_choice, FF, NP, CR, FE, max_gen, W) # Can be changed to create an object of de-R1 or de-R3 for reward defintions R1 and R3 resp.
