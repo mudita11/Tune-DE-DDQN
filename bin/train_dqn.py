@@ -208,16 +208,20 @@ memory = args.memory
 warmup = args.warmup
 LR = args.LR
 training_steps = args.training_steps
-
 ENV_NAME = 'ea'
 
                             ################################################# Training phase ##############################################################
+
+# MANUEL: This should probably go into a function get_path_to_script()
 filename = getframeinfo(currentframe()).filename
 parent = Path(filename).resolve().parent
 #print(parent/"training_set.txt")
 print(filename, parent)
+# MANUEL: This should be a parameter --training-set, not hard-coded here.
+training_set = os.path.join(pareent, "training_set.txt")
+
 func_choice = []
-with open(parent/"training_set.txt", 'r') as f:
+with open(training_set, 'r') as f:
     for item in f:
         func_choice.append(float(item.rstrip()))
 env_train = de_R2.DEEnv(func_choice, FF, NP, CR, FE, max_gen, W) # Can be changed to create an object of de-R1 or de-R3 for reward defintions R1 and R3 resp.
