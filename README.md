@@ -1,13 +1,13 @@
 # Tune-DE-DDQN
 
 # training_set is generated using following commands:
-x = np.random.choice(2160, 1080,replace = False)
+    x = np.random.choice(2160, 1080,replace = False)
 
-with open('training_set','w+') as f:
+    with open('training_set','w+') as f:
     
-    for i in x:
+        for i in x:
         
-        f.write(str(i)+'\n')
+            f.write(str(i)+'\n')
 
 # CEC2014 functions (http://web.mysites.ntu.edu.sg/epnsugan/PublicSite/Shared%20Documents/CEC-2014/Definitions%20of%20%20CEC2014%20benchmark%20suite%20Part%20A.pdf):
 Unimodal functions:
