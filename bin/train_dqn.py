@@ -228,10 +228,10 @@ def get_path_to_script():
 
 parent = get_path_to_script()
 # MANUEL: This should be a parameter --training-set, not hard-coded here.
-training_set = os.path.join(parent, training_set)
+training_set_path = os.path.join(parent, training_set)
 
 func_choice = []
-with open(training_set, 'r') as f:
+with open(training_set_path, 'r') as f:
     for item in f:
         func_choice.append(float(item.rstrip()))
 env_train = de_R2.DEEnv(func_choice, FF, NP, CR, FE, max_gen, W) # Can be changed to create an object of de-R1 or de-R3 for reward defintions R1 and R3 resp.

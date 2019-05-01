@@ -194,9 +194,6 @@ class DEEnv(gym.Env):
         suite_options = "dimensions: 2, 3, 5, 10, 20, 40"
         self.suite = cocoex.Suite(suite_name, "", suite_options)
         # First "" takes following arguments: year, instances; Second "" takes following arguments: dimensions, dimension_indices, function_indices, instance_indices
-        # for problem in suite:
-            # print(problem)
-        # self.func_choice = [suite[30], suite[80], suite[150], suite[190], suite[270], suite[350], suite[420], suite[500], suite[590], suite[660], suite[715]]
         self.fun_index = 0
     
     def step(self, action):
@@ -207,22 +204,22 @@ class DEEnv(gym.Env):
         bprime = mutate(self.population, self.r, self.FF, self.best, self.i)
         bprime[np.where(bprime < self.lbounds[0])] = self.lbounds[0]
         bprime[np.where(bprime > self.ubounds[0])] = self.ubounds[0]
-        
         self.crossovers = (np.random.rand(self.dim) < self.CR)
         self.crossovers[self.fill_points[self.i]] = True
-        self.u[self.i][:] = np.where(self.crossovers, bprime, self.X[self.i])
-        
+        self.u[self.i, :] = np.where(self.crossovers, bprime, self.X[self.i, :])
         self.F1[self.i] = self.fun(self.u[self.i])
     
+        # Window updating
+        fmin = np.min(self.copy_F)
+        fmedian = np.median(self.copy_F)
         reward = 0
-        second_dim = np.zeros(self.number_metric)
-        if self.F1[self.i] <= self.copy_F[self.i]:
-            second_dim[0] = self.opu[self.i]
+        second_dim = np.full(self.number_metric, -1)
+        second_dim[0] = self.opu[self.i]
+        #second_dim = np.zeros(self.number_metric)
+        if self.F1[self.i] < self.copy_F[self.i]:
             second_dim[1] = self.copy_F[self.i] - self.F1[self.i]
-            if self.F1[self.i] < np.min(self.copy_F):
-                second_dim[2] = np.min(self.copy_F) - self.F1[self.i]
-            else:
-                second_dim[2] = -1
+            if self.F1[self.i] < fmin:
+                second_dim[2] = fmin - self.F1[self.i]
             if self.F1[self.i] < self.best_so_far:
                 second_dim[3] = self.best_so_far - self.F1[self.i]
                 self.best_so_far = self.F1[self.i]
@@ -230,13 +227,10 @@ class DEEnv(gym.Env):
                 self.stagnation_count = 0;
                 reward = 10
             else:
-                second_dim[3] = -1
                 self.stagnation_count += 1
                 reward = 1
-            if self.F1[self.i] < np.median(self.copy_F):
-                second_dim[4] = np.median(self.copy_F) - self.F1[self.i]
-            else:
-                second_dim[4] = -1
+            if self.F1[self.i] < fmedian:
+                second_dim[4] = fmedian - self.F1[self.i]
             # FIFO window
             if np.any(self.window[:, 1] == np.inf):
                 for value in range(self.window_size-1,-1,-1):
@@ -257,11 +251,10 @@ class DEEnv(gym.Env):
                 self.worst_so_far = self.F1[self.i]
             self.F[self.i] = self.F1[self.i]
             self.X[self.i] = self.u[self.i]
-            self.third_dim.append(second_dim)
         else:
-            second_dim = [-1 for i in range(self.number_metric)]
+            second_dim = np.full(self.number_metric, -1)
             second_dim[0] = self.opu[self.i]
-            self.third_dim.append(second_dim)
+        self.third_dim.append(second_dim)
         
         self.max_std = np.std((np.repeat(self.best_so_far, self.NP/2), np.repeat(self.worst_so_far, self.NP/2)))
 
@@ -306,7 +299,6 @@ class DEEnv(gym.Env):
         
         # Preparation for observation to give for next action decision
         self.r = select_samples(self.NP, self.i, 5)
-        self.jrand = np.random.randint(self.dim)
 
         ob = np.zeros(99); ob[19:83] = np.copy(self.copy_ob)
 
@@ -332,7 +324,7 @@ class DEEnv(gym.Env):
         ob[95:99] = Weighted_Offspring2(self.NP, self.n_ops, self.window, 4, self.max_gen)
 
         if self.budget <= 0:
-            print("time:", time.time() - self.a)
+            print("time taken for one episode:", time.time() - self.a)
             print("\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",self.budget, self.best_so_far,"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n")
             return ob, reward, True, {}
         else:
@@ -350,33 +342,41 @@ class DEEnv(gym.Env):
             # sol = np.copy(o.phenome)
         # self.best_value = self.fun.objective_function(sol)
         # print("Function info: fun= ", self.func_select[self.fun_index], " with dim = ", self.dim, " with best value= ", self.best_value)
+        
         self.a = time.time()
-        # BBOB
-        self.fun = self.suite[int(self.func_choice[self.fun_index])]# ; print("fun details:",self.fun_index, self.fun)
+        # BBOB function selection
+        self.fun = self.suite[int(self.func_choice[self.fun_index])]
         self.dim = self.fun.dimension
         self.lbounds = self.fun.lower_bounds
         self.ubounds = self.fun.upper_bounds
         print("Function info: fun= {} with dim = {}" .format(self.fun, self.dim))
-
+        
         self.generation = 0
+        range = self.lbounds - self.ubounds
+        center = self.lbounds + range / 2
+        x0 = center + 0.8 * range * (np.random.rand(self.dim)-0.5)
         self.X = self.lbounds + ((self.ubounds - self.lbounds) * np.random.rand(self.NP, self.dim))
-        self.F = [self.fun(x) for x in self.X]
-        self.u = [[0 for z in range(int(self.dim))] for k in range(int(self.NP))]
-        self.F1 = np.zeros(int(self.NP));
+        self.X[0, :] = x0
+        #self.F = [self.fun(x) for x in self.X]
+        self.np.apply_along_axis(self.fun, 1, self.X)
+        #self.u = [[0 for z in range(int(self.dim))] for k in range(int(self.NP))]
+        self.u = np.full((self.NP, self.dim), 0.0)
+        self.F1 = self.np.apply_along_axis(self.fun, 1, self.u)
+        #self.F1 = np.zeros(int(self.NP));
         self.budget -= self.NP
-        # Make changes to X wherever needed using u and use popultion to pick random solutions
+        
+        # X is updated after each individual evaluation and population, used to pick random solutions, is updated after a population is evaluated.
         self.population = np.copy(self.X)
         self.copy_F = np.copy(self.F)
     
         self.population = np.copy(self.X)
-        self.best_so_far = np.min(self.copy_F);
-        self.best_so_far_position = self.population[np.argmin(self.copy_F)]
-        self.worst_so_far = np.max(self.copy_F);
+        self.best_so_far = np.min(self.copy_F)
+        self.best = np.argmin(self.F)
+        self.best_so_far_position = self.population[self.best]
+        self.worst_so_far = np.max(self.copy_F)
         
         self.i = 0;
         self.r = select_samples(self.NP, self.i, 5)
-        self.best = np.argmin(self.F)
-        self.jrand = np.random.randint(self.dim)
         
         self.window = [[np.inf for j in range(self.number_metric)] for i in range(self.window_size)]; self.window = np.array(self.window); self.window[:, 0].fill(-1)
         self.gen_window = []
