@@ -160,6 +160,22 @@ def Best_Offspring2(popsize, n_ops, gen_window, Off_met, max_gen):
     return state_value
 
 
+def update_window(window, window_size, second_dim, opu, i, copy_F, F1):
+    # FIFO window
+    which = (window[:, 1] == np.inf)
+    if np.any(which):
+        last_empty = np.max(np.flatnonzero(which))
+        window[last_empty] = second_dim
+        return window
+    which = (window[:, 0] == opu[self.i])
+    if np.any(which):
+        last = np.max(np.flatnonzero(which))
+    else:
+        last = np.argmin(window[:,1])
+    window[1:(last+1), :] = window[0,last, :]
+    window[0, :] = second_dim
+    return window
+
                                                 ##########################class DEEnv###########################################
 
 mutations = [rand1, rand2, rand_to_best2, current_to_rand1]
@@ -209,17 +225,18 @@ class DEEnv(gym.Env):
         self.u[self.i, :] = np.where(self.crossovers, bprime, self.X[self.i, :])
         self.F1[self.i] = self.fun(self.u[self.i])
     
-        # Window updating
         fmin = np.min(self.copy_F)
         fmedian = np.median(self.copy_F)
         reward = 0
-        second_dim = np.full(self.number_metric, -1)
+        second_dim = np.full(self.number_metric, np.nan)
         second_dim[0] = self.opu[self.i]
-        #second_dim = np.zeros(self.number_metric)
         if self.F1[self.i] < self.copy_F[self.i]:
+            # Fitness improvement wrt parent
             second_dim[1] = self.copy_F[self.i] - self.F1[self.i]
+            # Fitness improvement wrt best parent
             if self.F1[self.i] < fmin:
                 second_dim[2] = fmin - self.F1[self.i]
+            # Fitness improvement wrt bsf
             if self.F1[self.i] < self.best_so_far:
                 second_dim[3] = self.best_so_far - self.F1[self.i]
                 self.best_so_far = self.F1[self.i]
@@ -229,31 +246,17 @@ class DEEnv(gym.Env):
             else:
                 self.stagnation_count += 1
                 reward = 1
+            # Fitness improvement wrt median population fitness
             if self.F1[self.i] < fmedian:
                 second_dim[4] = fmedian - self.F1[self.i]
-            # FIFO window
-            if np.any(self.window[:, 1] == np.inf):
-                for value in range(self.window_size-1,-1,-1):
-                    if self.window[value][0] == -1:
-                        self.window[value] = second_dim
-                        break
-            else:
-                for nn in range(self.window_size-1,-1,-1):
-                    if self.window[nn][0] == self.opu[self.i]:
-                        for nn1 in range(nn, 0, -1):
-                            self.window[nn1] = self.window[nn1-1]
-                            self.window[0] = second_dim
-                            break
-                    elif nn==0 and self.window[nn][0] != self.opu[self.i]:
-                        if (self.copy_F[self.i] - self.F1[self.i]) < np.max(self.window[: ,1]):
-                            self.window[np.argmax(self.window[:,1])] = second_dim
+            
+            self.window = update_window(self.window, self.window_size, second_dim, self.opu, self.copy_F, self.F1)
+            
             if self.worst_so_far < self.F1[self.i]:
                 self.worst_so_far = self.F1[self.i]
             self.F[self.i] = self.F1[self.i]
             self.X[self.i] = self.u[self.i]
-        else:
-            second_dim = np.full(self.number_metric, -1)
-            second_dim[0] = self.opu[self.i]
+        
         self.third_dim.append(second_dim)
         
         self.max_std = np.std((np.repeat(self.best_so_far, self.NP/2), np.repeat(self.worst_so_far, self.NP/2)))
@@ -297,6 +300,7 @@ class DEEnv(gym.Env):
             self.pop_average = np.average(self.copy_F);
             self.pop_std = np.std(self.copy_F)
         
+        assert self.i < self.NP and self.i >= 0
         # Preparation for observation to give for next action decision
         self.r = select_samples(self.NP, self.i, 5)
 
@@ -322,7 +326,7 @@ class DEEnv(gym.Env):
         ob[87:91] = Weighted_Offspring2(self.NP, self.n_ops, self.window, 2, self.max_gen)
         ob[91:95] = Weighted_Offspring2(self.NP, self.n_ops, self.window, 3, self.max_gen)
         ob[95:99] = Weighted_Offspring2(self.NP, self.n_ops, self.window, 4, self.max_gen)
-
+        assert np.all(ob >= 0.0 and ob <= 1.0)
         if self.budget <= 0:
             print("time taken for one episode:", time.time() - self.a)
             print("\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$",self.budget, self.best_so_far,"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n")
@@ -365,7 +369,7 @@ class DEEnv(gym.Env):
         #self.F1 = np.zeros(int(self.NP));
         self.budget -= self.NP
         
-        # X is updated after each individual evaluation and population, used to pick random solutions, is updated after a population is evaluated.
+        # X and F are updated after each individual evaluation; population, used to pick random solutions, and copy_F are updated after a population is evaluated.
         self.population = np.copy(self.X)
         self.copy_F = np.copy(self.F)
     
