@@ -46,9 +46,11 @@ instance = sys.argv[4]; #print("inst1",instance)
 cand_params = sys.argv[5:]
 
 # Define the stdout and stderr files.
+prefix = "c{}".format(candidate_id)
 out_file = "c" + str(candidate_id) + "-" + str(instance_id) + ".stdout"
 err_file = "c" + str(candidate_id) + "-" + str(instance_id) + ".stderr"
-
+weight_file = prefix + "_dqn_ea_weights.h5f"
+training_set = "training_set.txt"
 # Build the command, run it and save the output to a file,
 # to parse the result from it.
 # 
@@ -58,7 +60,7 @@ err_file = "c" + str(candidate_id) + "-" + str(instance_id) + ".stderr"
 
 outf = open(out_file, "w")
 errf = open(err_file, "w")
-command = " ".join([exe, "--instance", instance] + cand_params)
+command = " ".join([exe, "--trainingInstance_file", training_set, "--weight_file ", weight_file, "--instance", instance] + cand_params)
 # print(command)
 return_code = subprocess.call(command, shell=True,stdout = outf, stderr = errf)
 outf.close()

@@ -176,6 +176,9 @@ class EpsGreedyQPolicy(PolicyDebug):
                     ############################################### Parameters ##############################################################
 
 parser = argparse.ArgumentParser(description = "de and ddqn parameters")
+
+parser.add_argument('--trainingInstance_file', help='File with training instances')
+parser.add_argument('--weight_file', help='File with NN weights')
 parser.add_argument('--instance', type=int, help='Validation instance selected')
 parser.add_argument('--FF', type=float, default=0.5,  help='scaling factor for DE')
 parser.add_argument('--NP', type=int, default=100,  help='population size for DE')
@@ -193,8 +196,11 @@ parser.add_argument('--LR', type=float, default=0.0001,  help='Adam learning rat
 parser.add_argument('--training_steps', type=int, default=100000000,  help='Steps required for each training')
 
 args = parser.parse_args()
+
+training_set = args.trainingInstance_file
+weight_file = args.weight_file
 instance = args.instance
-FF = args.FF#; print(FF)
+FF = args.FF
 NP = args.NP
 CR = args.CR
 FE = args.FE
@@ -208,17 +214,21 @@ memory = args.memory
 warmup = args.warmup
 LR = args.LR
 training_steps = args.training_steps
+
 ENV_NAME = 'ea'
+
+def get_path_to_script():
+    # MANUEL: This should probably go into a function get_path_to_script()
+    filename = getframeinfo(currentframe()).filename
+    parent = Path(filename).resolve().parent
+    return parent
+
 
                             ################################################# Training phase ##############################################################
 
-# MANUEL: This should probably go into a function get_path_to_script()
-filename = getframeinfo(currentframe()).filename
-parent = Path(filename).resolve().parent
-#print(parent/"training_set.txt")
-print(filename, parent)
+parent = get_path_to_script()
 # MANUEL: This should be a parameter --training-set, not hard-coded here.
-training_set = os.path.join(pareent, "training_set.txt")
+training_set = os.path.join(parent, training_set)
 
 func_choice = []
 with open(training_set, 'r') as f:
@@ -240,7 +250,7 @@ print("Model Summary: ",model.summary())
 
 memory = SequentialMemory(limit=memory, window_length=1)
 
-# Boltzmann Q Policy
+# Epsilon-Greedy Policy
 policy = EpsGreedyQPolicy()
 
 # DQN Agent: Finally, we configure and compile our agent. You can use every built-in Keras optimizer and even the metrics!
@@ -251,8 +261,8 @@ dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmu
 # Neural Compilation
 dqn.compile(Adam(lr=LR), metrics=['mae'])
 
-callbacks = [ModelCheckpoint('dqn_ea_weights.h5f', 32)]
-print("above fit")
+callbacks = [ModelCheckpoint(weight_file, 32)]
+
 # Fit the model: training for nb_steps = number of generations
 dqn.fit(env_train, callbacks = callbacks, nb_steps=training_steps, visualize=False, verbose=0, nb_max_episode_steps = None)
 
@@ -271,25 +281,8 @@ model.add(Dense(unit, activation = 'relu'))
 model.add(Dense(unit, activation = 'relu'))
 model.add(Dense(nb_actions, activation = 'linear'))
 
+dqn.load_weights(weight_file)
+
 dqn.test(env_validate, nb_episodes=1, visualize = False)
 print(env_validate.best_so_far)
-#return env_validate.best_so_far
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

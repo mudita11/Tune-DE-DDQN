@@ -14,7 +14,7 @@ execDir = "./arena"
 ## Directory where tuning instances are located, either absolute path or
 ## relative to current directory.
 trainInstancesDir = ""
-trainInstancesFile = "./trainInstancesFile.txt"
+trainInstancesFile = "./validation_set.txt"
 
 targetRunner = "./target-runner.py"
 
