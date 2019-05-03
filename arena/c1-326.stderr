@@ -1,0 +1,18 @@
+2019-05-03 16:15:59.240210: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+Using TensorFlow backend.
+Traceback (most recent call last):
+  File "../bin/train_dqn.py", line 267, in <module>
+    dqn.fit(env_train, callbacks = callbacks, nb_steps=training_steps, visualize=False, verbose=0, nb_max_episode_steps = None)
+  File "/home/userfs/m/ms1938/.local/lib/python3.6/site-packages/rl/core.py", line 177, in fit
+    observation, r, done, info = env.step(action)
+  File "/local/data/data/ms1938/tf_env/batchsize64/Tune-DE-DDQN/bin/envs/ea/de_R2.py", line 335, in step
+    self.copy_ob[32:36] = Best_Offspring1(self.NP, self.n_ops, self.gen_window, 1, self.max_gen)
+  File "/local/data/data/ms1938/tf_env/batchsize64/Tune-DE-DDQN/bin/envs/ea/de_R2.py", line 154, in Best_Offspring1
+    best_t = function_at_generation(n_ops, gen_window, gen_window_len - 1, Off_met, np.max)
+  File "/local/data/data/ms1938/tf_env/batchsize64/Tune-DE-DDQN/bin/envs/ea/de_R2.py", line 66, in function_at_generation
+    value[op] = function(gen_window[j, np.where((gen_window[j, :, 0] == op) & (~np.isnan(gen_window[j, :, Off_met]))), Off_met])
+  File "/home/userfs/m/ms1938/.local/lib/python3.6/site-packages/numpy/core/fromnumeric.py", line 2505, in amax
+    initial=initial)
+  File "/home/userfs/m/ms1938/.local/lib/python3.6/site-packages/numpy/core/fromnumeric.py", line 86, in _wrapreduction
+    return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+ValueError: zero-size array to reduction operation maximum which has no identity
