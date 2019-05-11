@@ -62,8 +62,10 @@ def count_success(popsize, gen_window, j, n_ops, Off_met):
 
 def function_at_generation(n_ops, gen_window, j, Off_met, function):
     value = np.zeros(n_ops)
+    a = gen_window[0, :, Off_met]
     for op in range(n_ops):
-        value[op] = function(gen_window[j, np.where((gen_window[j, :, 0] == op) & (~np.isnan(gen_window[j, :, Off_met]))), Off_met])
+        b = np.where((gen_window[0, :, 0] == op) & ~np.isnan(a), a, 0.0)
+        value[op] = function(b)
     return value
 
 def min_gen(max_gen, gen_window):
