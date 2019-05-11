@@ -190,7 +190,7 @@ parser.add_argument('--unit', type=int, default=100,  help='number of nodes in e
 parser.add_argument('--batchsize', type=int, default=4,  help='batch size of neural network')
 parser.add_argument('--gamma', type=float, default=0.99,  help='discount factor')
 parser.add_argument('--C', type=int, default=1000,  help='target network synchronised')
-parser.add_argument('--memory', type=int, default=100000,  help='memory size')
+parser.add_argument('--limit', type=int, default=100000,  help='memory size')
 parser.add_argument('--warmup', type=int, default=10000,  help='number of evaluations used for warm up')
 parser.add_argument('--LR', type=float, default=0.0001,  help='Adam learning rate')
 parser.add_argument('--training_steps', type=int, default=100000000,  help='Steps required for each training')
@@ -210,10 +210,13 @@ unit = args.unit
 batchsize = args.batchsize
 gamma = args.gamma
 C = args.C
-memory = args.memory
+limit = args.limit
 warmup = args.warmup
 LR = args.LR
 training_steps = args.training_steps
+
+FE = 1e4
+training_steps = 6048e5
 
 ENV_NAME = 'ea'
 
@@ -248,7 +251,7 @@ model.add(Dense(unit, activation = 'relu'))
 model.add(Dense(nb_actions, activation = 'linear'))
 print("Model Summary: ",model.summary())
 
-memory = SequentialMemory(limit=memory, window_length=1)
+memory = SequentialMemory(limit=limit, window_length=1)
 
 # Epsilon-Greedy Policy
 policy = EpsGreedyQPolicy()
