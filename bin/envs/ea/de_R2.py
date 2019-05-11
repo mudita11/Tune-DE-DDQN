@@ -145,19 +145,18 @@ def Best_Offspring1(popsize, n_ops, gen_window, Off_met, max_gen):
     gen_window = np.array(gen_window)
     gen_window_len = len(gen_window)
     total_success_t, total_unsuccess_t = count_success(popsize, gen_window, gen_window_len - 1, n_ops, Off_met)
-    if gen_window_len >= 2:
-        total_success_t_1, total_unsuccess_t_1 = count_success(popsize, gen_window, gen_window_len - 2, n_ops, Off_met)
-    else:
-        total_success_t_1 = 0; total_unsuccess_t_1 = 0
-    n_applications = total_success_t + total_unsuccess_t - (total_success_t_1 + total_unsuccess_t_1)
-    n_applications[n_applications == 0] = 1
     best_t = function_at_generation(n_ops, gen_window, gen_window_len - 1, Off_met, np.max)
     if gen_window_len >= 2:
+        total_success_t_1, total_unsuccess_t_1 = count_success(popsize, gen_window, gen_window_len - 2, n_ops, Off_met)
         best_t_1 = function_at_generation(n_ops, gen_window, gen_window_len - 2, Off_met, np.max)
-        best_t_1[best_t_1 == 0] = 1
     else:
-        best_t_1 = np.ones(n_ops)
-    state_value = np.fabs(best_t - best_t_1) / (best_t_1 * np.fabs(n_applications))
+        total_success_t_1 = 0; total_unsuccess_t_1 = 0
+        best_t_1 = np.zeros(n_ops)
+    state_value = np.fabs(best_t - best_t_1)
+    n_applications = total_success_t + total_unsuccess_t - (total_success_t_1 + total_unsuccess_t_1)
+    n_applications[n_applications == 0] = 1
+    best_t_1[best_t_1 == 0] = 1
+    state_value = state_value / (best_t_1 * np.fabs(n_applications))
     #state_value = np.zeros(n_ops)
     #gen_window = np.array(gen_window)
     #best_t = np.zeros(n_ops); best_t_1 = np.zeros(n_ops)
