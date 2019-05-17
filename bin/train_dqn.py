@@ -216,7 +216,8 @@ LR = args.LR
 training_steps = args.training_steps
 
 FE = 1e4
-training_steps = 6048e5
+#training_steps = 6048e5
+training_steps = 32e6
 
 ENV_NAME = 'ea'
 
