@@ -4,7 +4,8 @@ import numpy as np
 
 
 n = 2160
-m = 24
+#m = 24
+m = 360
 training_ratio = 0.5
 validation_ratio = 0.25
 
@@ -15,7 +16,8 @@ np.random.seed(1234567)
 num_train = int(m * training_ratio)
 num_validation = int(num_train +  m * validation_ratio)
 
-problems = 1 + np.arange(n)
+#problems = 1 + np.arange(n)
+problems = np.arange(n)
 subsets = np.split(problems, n/m)
 
 training_set =  []
